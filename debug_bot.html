@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bot Debug</title>
+</head>
+<body>
+<pre id="log" style="font-size:12px;"></pre>
+<script>
+const log = document.getElementById('log');
+function L(msg) { log.textContent += msg + '\n'; console.log(msg); }
+</script>
+<script src="js/engine.js"></script>
+<script src="js/ai.js"></script>
+<script>
+(async function() {
+    const engine = new window.ChessEngine();
+    const ai = new window.ChessAI();
+    
+    L("Engine initialized. Turn: " + engine.turn);
+    
+    // Get all white legal moves
+    const whiteMoves = engine.getAllLegalMoves();
+    L("White legal moves count: " + whiteMoves.length);
+    
+    // Make e4 move (e2->e4)
+    const e4 = whiteMoves.find(m => m.from.r === 6 && m.from.c === 4 && m.to.r === 4 && m.to.c === 4);
+    if (e4) {
+        L("Making e4: " + JSON.stringify(e4));
+        engine.makeMove(e4);
+        L("After e4, turn: " + engine.turn);
+    } else {
+        L("Could not find e4 move! Available: " + JSON.stringify(whiteMoves.slice(0,5)));
+    }
+    
+    // Now find AI move for black
+    L("Finding AI move for black (orta difficulty)...");
+    const t0 = performance.now();
+    const bestMove = ai.findBestMove(engine, 'orta');
+    const t1 = performance.now();
+    L("AI took " + (t1-t0).toFixed(1) + "ms");
+    L("AI best move: " + JSON.stringify(bestMove));
+    
+    if (bestMove) {
+        engine.makeMove(bestMove);
+        L("After AI move, turn: " + engine.turn);
+        L("Board row 6: " + JSON.stringify(engine.board[6]));
+        L("Board row 5: " + JSON.stringify(engine.board[5]));
+    }
+    
+    L("\n--- Testing game status ---");
+    const status = engine.getGameStatus();
+    L("Status: " + JSON.stringify(status));
+})();
+</script>
+</body>
+</html>

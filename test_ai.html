@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test AI</title></head>
+<body>
+<div id="output"></div>
+<script src="js/engine.js"></script>
+<script src="js/ai.js"></script>
+<script>
+try {
+    const engine = new ChessEngine();
+    const ai = new ChessAI();
+    const out = document.getElementById('output');
+    out.innerHTML += "<p>Engine init: turn=" + engine.turn + "</p>";
+    
+    // White plays e4 (r: 6, c: 4 -> r: 4, c: 4)
+    const whiteMove = { from: { r: 6, c: 4 }, to: { r: 4, c: 4 } };
+    engine.makeMove(whiteMove);
+    out.innerHTML += "<p>After e4: turn=" + engine.turn + "</p>";
+    
+    const t0 = performance.now();
+    const bestMoveOrta = ai.findBestMove(engine, 'orta');
+    const t1 = performance.now();
+    out.innerHTML += "<p>AI orta: " + JSON.stringify(bestMoveOrta) + " in " + Math.round(t1 - t0) + "ms</p>";
+    
+    const bestMoveUsta = ai.findBestMove(engine, 'usta');
+    out.innerHTML += "<p>AI usta: " + JSON.stringify(bestMoveUsta) + "</p>";
+} catch (e) {
+    document.getElementById('output').innerHTML += "<p style='color:red'>ERROR: " + e.stack + "</p>";
+}
+</script>
+</body>
+</html>
