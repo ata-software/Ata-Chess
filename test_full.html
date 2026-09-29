@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="theme-color" content="#121418">
+    <title>Ata Chess</title>
+    <meta name="description"
+        content="Telefonlar için dikey modda özel tasarlanmış, tüm kuralları ve mekanikleri (rok, geçerken alma, terfi, pat, şah-mat) çalışan akıllı yapay zekalı Canvas satranç oyunu.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cinzel:wght@700&family=Cinzel+Decorative:wght@700&family=Orbitron:wght@600;700&family=Playfair+Display:wght@600;700&family=Roboto+Mono:wght@500;700&family=Dancing+Script:wght@700&display=swap"
+        rel="stylesheet">
+
+    <!-- PWA & Favicon -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Early theme & font restore to eliminate flash -->
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('chess_pro_theme') || 'crimson';
+                document.documentElement.setAttribute('data-theme', theme);
+                var font = localStorage.getItem('chess_pro_font') || 'Outfit';
+                document.documentElement.style.setProperty('--font-main', "'" + font + "', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif");
+            } catch(e) {}
+        })();
+    </script>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Top App Navigation Bar -->
+        <header class="app-header">
+            <div class="brand-wrapper">
+                <div class="brand-icon">♟️</div>
+                <div class="brand-text-col">
+                    <h1 class="brand-title">Satranç by.ATA</h1>
+                    <span class="mode-badge" id="header-mode-badge">⚔️ YAPAY ZEKA</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-online" class="icon-btn" title="Online Multiplayer" aria-label="Online">🌐</button>
+                <button id="btn-sound" class="icon-btn" title="Ses Aç/Kapat" aria-label="Ses">🔊</button>
+                <button id="btn-settings" class="icon-btn" title="Ayarlar" aria-label="Ayarlar">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Unified Match Arena (Integrated Opponent HUD + Board + Player HUD) -->
+        <main class="match-arena">
+            <!-- Opponent HUD Bar (Top) -->
+            <div class="player-hud-bar hud-top" id="top-player-panel">
+                <img class="hud-frame-overlay" id="top-frame-overlay" src="" alt="" aria-hidden="true">
+                <div class="hud-profile">
+                    <div class="hud-avatar-wrapper">
+                        <div class="hud-avatar">🤖</div>
+                        <span id="top-player-badge" class="hud-turn-ring"></span>
+                    </div>
+                </div>
+                <div class="hud-details">
+                    <div class="hud-name-row">
+                        <span id="top-player-name" class="hud-player-name">Yapay Zeka (Orta)</span>
+                    </div>
+                    <div class="hud-captured-row">
+                        <div id="top-captured-tray" class="captured-tray"></div>
+                    </div>
+                </div>
+                <div class="hud-clock-box">
+                    <span class="clock-label">SÜRE</span>
+                    <span id="top-player-timer" class="player-timer">∞</span>
+                </div>
+            </div>
+
+            <!-- Chessboard Canvas with Luxury Bezel Frame -->
+            <div class="board-container" id="board-container">
+                <div class="board-bezel">
+                    <div class="canvas-wrapper">
+                        <canvas id="chess-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Player HUD Bar (Bottom) -->
+            <div class="player-hud-bar hud-bottom" id="bottom-player-panel">
+                <img class="hud-frame-overlay" id="bottom-frame-overlay" src="" alt="" aria-hidden="true">
+                <div class="hud-profile">
+                    <div class="hud-avatar-wrapper">
+                        <div class="hud-avatar">👤</div>
+                        <span id="bottom-player-badge" class="hud-turn-ring active-turn"></span>
+                    </div>
+                </div>
+                <div class="hud-details">
+                    <div class="hud-name-row">
+                        <span id="bottom-player-name" class="hud-player-name">Siz</span>
+                    </div>
+                    <div class="hud-captured-row">
+                        <div id="bottom-captured-tray" class="captured-tray"></div>
+                    </div>
+                </div>
+                <div class="hud-clock-box">
+                    <span class="clock-label">SÜRE</span>
+                    <span id="bottom-player-timer" class="player-timer">∞</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Live Match Center Ribbon (Turn Status & Realtime Move Ticker) -->
+        <div class="match-center-ribbon">
+            <div id="status-banner" class="status-chip">
+                <span class="status-pulse-dot"></span> Sıra: Beyaz
+            </div>
+            <div class="history-strip">
+                <div class="history-list" id="move-history-list"></div>
+            </div>
+        </div>
+
+        <!-- Floating Ergonomic Thumb Dock -->
+        <nav class="floating-controls-dock">
+            <div class="dock-cell">
+                <button id="btn-exit" class="dock-btn dock-btn-exit" title="Lobiye Dön">
+                    <span class="dock-icon">🚪</span>
+                    <span class="dock-label">Çık</span>
+                </button>
+            </div>
+            <div class="dock-cell">
+                <button id="btn-flip" class="dock-btn dock-btn-flip" title="Döndür">
+                    <span class="dock-icon">🔄</span>
+                    <span class="dock-label">Döndür</span>
+                </button>
+            </div>
+            <div class="dock-cell">
+                <button id="btn-new-game" class="dock-btn dock-btn-highlight" title="Yeni Oyun">
+                    <span class="dock-icon">⚡</span>
+                    <span class="dock-label">Yeni Oyun</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Modal: Pawn Promotion Selection -->
+    <div id="promotion-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3 class="modal-title">Piyon Terfisi</h3>
+            <p class="modal-subtitle">Dönüştürmek istediğiniz taşı seçin:</p>
+            <div class="promotion-pieces">
+                <button class="promo-btn" id="promo-q" title="Vezir">♕</button>
+                <button class="promo-btn" id="promo-r" title="Kale">♖</button>
+                <button class="promo-btn" id="promo-b" title="Fil">♗</button>
+                <button class="promo-btn" id="promo-n" title="At">♘</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Game Over / Checkmate / Stalemate -->
+    <div id="game-over-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="game-over-icon">🏆</div>
+            <h2 id="game-over-title" class="modal-title">Şah-Mat!</h2>
+            <p id="game-over-subtitle" class="modal-subtitle">Beyaz Kazandı.</p>
+            <button id="btn-rematch" class="primary-btn">Tekrar Oyna</button>
+        </div>
+    </div>
+
+    <!-- Modal: Settings (Liquid Glass Site Theme) -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-box settings-modal-box">
+            <div class="settings-header-row">
+                <h3 class="settings-modal-title">⚙️ Oyun Ayarları</h3>
+                <button type="button" class="settings-close-x" id="btn-close-settings-x" title="Kapat" aria-label="Kapat">✕</button>
+            </div>
+            
+            <div class="settings-form">
+                <!-- 1. Oyun Modu -->
+                <div class="form-group">
+                    <label>🎮 Oyun Modu</label>
+                    <select id="select-mode" class="hidden-native-select" tabindex="-1" aria-hidden="true">
+                        <option value="vs-bot">Yapay Zekaya Karşı</option>
+                        <option value="pvp">2 Kişilik (Aynı Cihaz)</option>
+                    </select>
+                    <div class="custom-select-wrap" data-select-id="select-mode">
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-current">
+                                <span class="custom-select-icon">🤖</span>
+                                <span class="custom-select-text">Yapay Zekaya Karşı</span>
+                            </span>
+                            <span class="custom-select-chevron">▼</span>
+                        </button>
+                        <div class="custom-select-menu" role="listbox">
+                            <div class="custom-select-item is-selected" data-value="vs-bot">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🤖</span>
+                                    <span class="item-text">Yapay Zekaya Karşı</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="pvp">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">👥</span>
+                                    <span class="item-text">2 Kişilik (Aynı Cihaz)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Bot Seviyesi -->
+                <div class="form-group">
+                    <label>🧠 Bot Seviyesi</label>
+                    <select id="select-difficulty" class="hidden-native-select" tabindex="-1" aria-hidden="true">
+                        <option value="kolay">eA1 Small (Düşük)</option>
+                        <option value="orta" selected>RR ‑ 1 Thinking (Orta)</option>
+                        <option value="usta">α1Q GoD (Üst Düzey)</option>
+                    </select>
+                    <div class="custom-select-wrap" data-select-id="select-difficulty">
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-current">
+                                <span class="custom-select-icon">🟡</span>
+                                <span class="custom-select-text">RR ‑ 1 Thinking (Orta)</span>
+                            </span>
+                            <span class="custom-select-chevron">▼</span>
+                        </button>
+                        <div class="custom-select-menu" role="listbox">
+                            <div class="custom-select-item" data-value="kolay">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🟢</span>
+                                    <span class="item-text">eA1 Small (Düşük)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item is-selected" data-value="orta">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🟡</span>
+                                    <span class="item-text">RR ‑ 1 Thinking (Orta)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="usta">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🔴</span>
+                                    <span class="item-text">α1Q GoD (Üst Düzey)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Zaman Kontrolü -->
+                <div class="form-group">
+                    <label>⏱️ Zaman Kontrolü</label>
+                    <select id="select-timer" class="hidden-native-select" tabindex="-1" aria-hidden="true">
+                        <option value="0" selected>Sınırsız (Rahat Mod)</option>
+                        <option value="180">3 Dakika (Blitz)</option>
+                        <option value="300">5 Dakika (Hızlı)</option>
+                        <option value="600">10 Dakika (Klasik)</option>
+                    </select>
+                    <div class="custom-select-wrap" data-select-id="select-timer">
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-current">
+                                <span class="custom-select-icon">♾️</span>
+                                <span class="custom-select-text">Sınırsız (Rahat Mod)</span>
+                            </span>
+                            <span class="custom-select-chevron">▼</span>
+                        </button>
+                        <div class="custom-select-menu" role="listbox">
+                            <div class="custom-select-item is-selected" data-value="0">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">♾️</span>
+                                    <span class="item-text">Sınırsız (Rahat Mod)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="180">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">⚡</span>
+                                    <span class="item-text">3 Dakika (Blitz)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="300">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🔥</span>
+                                    <span class="item-text">5 Dakika (Hızlı)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="600">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">⏳</span>
+                                    <span class="item-text">10 Dakika (Klasik)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Tahta Teması -->
+                <div class="form-group">
+                    <label>🎨 Tahta & Atmosfer Teması</label>
+                    <select id="select-theme" class="hidden-native-select" tabindex="-1" aria-hidden="true">
+                        <option value="crimson" selected>🔴 Kırmızı & Beyaz</option>
+                        <option value="wood">🪵 Ahşap Desen (Ata Chess)</option>
+                        <option value="newspaper">📰 Gazete Tema</option>
+                        <option value="steel">⚙️ Çelik Tema</option>
+                        <option value="retro">🕹️ Retro Tema</option>
+                        <option value="cyber">⚡ Cyber (Neon HUD)</option>
+                    </select>
+                    <div class="custom-select-wrap" data-select-id="select-theme">
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-current">
+                                <span class="custom-select-icon">🔴</span>
+                                <span class="custom-select-text">Kırmızı & Beyaz</span>
+                            </span>
+                            <span class="custom-select-chevron">▼</span>
+                        </button>
+                        <div class="custom-select-menu" role="listbox">
+                            <div class="custom-select-item is-selected" data-value="crimson">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🔴</span>
+                                    <span class="item-text">Kırmızı & Beyaz</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="wood">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🪵</span>
+                                    <span class="item-text">Ahşap Desen (Ata Chess)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="newspaper">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">📰</span>
+                                    <span class="item-text">Gazete Tema</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="steel">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">⚙️</span>
+                                    <span class="item-text">Çelik Tema</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="retro">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">🕹️</span>
+                                    <span class="item-text">Retro Tema</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                            <div class="custom-select-item" data-value="cyber">
+                                <div class="item-left">
+                                    <span class="custom-select-icon">⚡</span>
+                                    <span class="item-text">Cyber (Neon HUD)</span>
+                                </div>
+                                <span class="item-check">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-close-settings" class="primary-btn" style="margin-top:4px;">Kaydet ve Kapat</button>
+        </div>
+    </div>
+
+    <!-- Modal: Online Multiplayer -->
+    <div id="online-modal" class="modal-overlay hidden">
+        <div class="modal-box online-modal-box">
+            <div class="modal-header-row">
+                <h3 class="modal-title">🌐 Online Satranç</h3>
+                <span id="socket-status-badge" class="socket-badge offline">Bağlantı Yok</span>
+            </div>
+
+            <!-- Cloud WebSocket (PieSocket) — no server URL needed -->
+
+            <!-- Tab Buttons -->
+            <div class="online-tabs">
+                <button id="tab-host" class="online-tab active">Oda Kur</button>
+                <button id="tab-join" class="online-tab">Odaya Katıl</button>
+            </div>
+
+            <!-- Panel 1: Host Room -->
+            <div id="panel-host" class="tab-panel">
+                <button id="btn-create-room" class="primary-btn">⚡ 4 Haneli Oda Kodu Oluştur</button>
+                <div id="host-code-display" class="host-code-display hidden">
+                    <span class="code-label">ODA KODUNUZ:</span>
+                    <div class="code-number-box" id="host-room-code">----</div>
+                    <p class="code-subtext">Bu kodu arkadaşına gönder — Rakip bekleniyor...</p>
+                    <div class="loader-pulse"></div>
+                    <p class="code-subtext" style="margin-top:8px;color:rgba(255,255,255,0.3);font-size:0.7rem">🌐
+                        PieSocket Bulut Bağlantısı</p>
+                </div>
+            </div>
+
+            <!-- Panel 2: Join Room -->
+            <div id="panel-join" class="tab-panel hidden">
+                <div class="join-input-group">
+                    <input type="text" id="input-room-code" class="glass-input code-input"
+                        placeholder="4 Haneli Kod (Örn: 4821)" maxlength="6">
+                    <button id="btn-join-room" class="primary-btn">Odaya Katıl</button>
+                </div>
+            </div>
+
+            <button id="btn-close-online" class="secondary-btn" style="margin-top: 16px;">Kapat</button>
+        </div>
+    </div>
+
+    <!-- LOBBY SCREEN -->
+    <div id="lobby-screen" class="lobby-overlay" data-theme="crimson">
+        <div class="lobby-bg-layer" id="lobby-bg-layer"></div>
+        <div class="lobby-bg-scrim"></div>
+        <div class="lobby-container">
+            <div class="lobby-content-wrap">
+
+                <!-- Header -->
+                <div class="lobby-header">
+                    <div class="lobby-logo-wrap">
+                        <img src="assets/logo.png" class="lobby-logo-img" alt="Satranç by.ATA Logo">
+                    </div>
+                    <h1 class="lobby-title">Satranç by.ATA</h1>
+                    <p class="lobby-subtitle">ATA SOFTWARE - ® 2026</p>
+
+                    <!-- iPhone Style Nickname Input -->
+                    <div class="ios-nickname-wrap" id="lobby-nickname-wrap">
+                        <div class="ios-nickname-field">
+                            <span class="ios-nickname-icon">👤</span>
+                            <input type="text" id="lobby-nickname-input" class="ios-nickname-input"
+                                placeholder="Adınız (3-10 karakter)..." maxlength="10" minlength="3" autocomplete="off"
+                                spellcheck="false" aria-label="Oyuncu Nickname">
+                            <button type="button" id="lobby-nickname-clear" class="ios-nickname-clear hidden"
+                                aria-label="Temizle">✕</button>
+                        </div>
+                        <span class="ios-nickname-hint" id="lobby-nickname-hint">Oyuna Başlamak İçin Adınızı
+                            Giriniz...</span>
+                    </div>
+
+                    <!-- Inventory Button -->
+                    <button class="lobby-inventory-btn" id="lobby-inventory-btn" type="button">
+                        <img src="assets/inventory_chest.png" class="inv-btn-img" alt="Envanter">
+                        <span class="inv-btn-label">Envanter</span>
+                        <span class="inv-btn-arrow">›</span>
+                    </button>
+                </div>
+
+                <!-- Middle Options Area -->
+                <div class="lobby-middle-content">
+                    <!-- Orta Kısım: Solda Tema, Sağda Oyun Modu -->
+                    <div class="lobby-mid-grid">
+
+                        <!-- ── Solda: Tema ── -->
+                        <div class="acc-slot acc-slot-theme">
+                            <div class="acc-item acc-item-half" id="acc-theme">
+                                <button class="acc-trigger" id="acc-theme-trigger" aria-expanded="false">
+                                    <span class="acc-label">Tema</span>
+                                    <span class="acc-value" id="acc-theme-value">
+                                        <span class="acc-theme-king-icon" id="acc-theme-king-slot"><svg
+                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45">
+                                                <g fill="#ffffff" fill-opacity="1" fill-rule="evenodd" stroke="#991b1b"
+                                                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M22.5 11.63V6M20 8h5" />
+                                                    <path
+                                                        d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" />
+                                                    <path
+                                                        d="M12.5 37c5.5 3.5 14.5 3.5 20 0v-4s3-4.5 1-9.5c0 0-4 1.5-6 0-2 1.5-4 1.5-6 0-2 1.5-6 0-6 0-2 5 1 9.5 1 9.5v4z" />
+                                                    <circle cx="22.5" cy="7" r="1.2" fill="#991b1b" />
+                                                    <circle cx="22.5" cy="18" r="1.6" fill="#991b1b" />
+                                                </g>
+                                            </svg></span> - Kırmızı
+                                    </span>
+                                    <span class="acc-arrow">›</span>
+                                </button>
+                                <div class="acc-panel" id="acc-theme-panel">
+                                    <div class="acc-panel-inner">
+                                        <div class="lobby-theme-grid">
+                                            <button class="lobby-theme-card lobby-theme-card-active"
+                                                data-theme="crimson" id="theme-crimson">
+                                                <div class="lobby-theme-swatch"></div>
+                                                <div class="lobby-theme-info">
+                                                    <div class="lobby-theme-name">🔴 Kırmızı</div>
+                                                </div>
+                                                <div class="lobby-theme-check" id="theme-check-crimson">✓</div>
+                                            </button>
+                                            <button class="lobby-theme-card" data-theme="wood" id="theme-wood">
+                                                <div class="lobby-theme-swatch"></div>
+                                                <div class="lobby-theme-info">
+                                                    <div class="lobby-theme-name">🪵 Ahşap</div>
+                                                </div>
+                                                <div class="lobby-theme-check hidden" id="theme-check-wood">✓</div>
+                                            </button>
+                                            <button class="lobby-theme-card" data-theme="newspaper"
+                                                id="theme-newspaper">
+                                                <div class="lobby-theme-swatch"></div>
+                                                <div class="lobby-theme-info">
+                                                    <div class="lobby-theme-name">📰 Gazete</div>
+                                                </div>
+                                                <div class="lobby-theme-check hidden" id="theme-check-newspaper">✓</div>
+                                            </button>
+                                            <button class="lobby-theme-card" data-theme="steel" id="theme-steel">
+                                                <div class="lobby-theme-swatch"></div>
+                                                <div class="lobby-theme-info">
+                                                    <div class="lobby-theme-name">⚙️ Çelik</div>
+                                                </div>
+                                                <div class="lobby-theme-check hidden" id="theme-check-steel">✓</div>
+                                            </button>
+                                            <button class="lobby-theme-card" data-theme="retro" id="theme-retro">
+                                                <div class="lobby-theme-swatch"></div>
+                                                <div class="lobby-theme-info">
+                                                    <div class="lobby-theme-name">🕹️ Retro</div>
+                                                </div>
+                                                <div class="lobby-theme-check hidden" id="theme-check-retro">✓</div>
+                                            </button>
+                                            <button class="lobby-theme-card" data-theme="cyber" id="theme-cyber">
+                                                <div class="lobby-theme-swatch"></div>
+                                                <div class="lobby-theme-info">
+                                                    <div class="lobby-theme-name">⚡ Cyber</div>
+                                                </div>
+                                                <div class="lobby-theme-check hidden" id="theme-check-cyber">✓</div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Sağda: Oyun Modu ── -->
+                        <div class="acc-slot acc-slot-mode">
+                            <div class="acc-item acc-item-half" id="acc-mode">
+                                <button class="acc-trigger" id="acc-mode-trigger" aria-expanded="false">
+                                    <span class="acc-label">Oyun Modu</span>
+                                    <span class="acc-value" id="acc-mode-value">🤖 Yapay Zeka</span>
+                                    <span class="acc-arrow">›</span>
+                                </button>
+                                <div class="acc-panel" id="acc-mode-panel">
+                                    <div class="acc-panel-inner">
+                                        <div class="acc-row acc-row-col">
+                                            <button class="acc-opt acc-opt-active" id="lobby-mode-bot"
+                                                data-mode="vs-bot">
+                                                <span>🤖</span> Yapay Zeka
+                                            </button>
+                                            <button class="acc-opt" id="lobby-mode-pvp" data-mode="pvp">
+                                                <span>👥</span> 2 Kişilik
+                                            </button>
+                                            <button class="acc-opt" id="lobby-mode-online" data-mode="online">
+                                                <span>🌐</span> Online
+                                            </button>
+                                        </div>
+
+                                        <!-- Bot difficulty (shown only in bot mode) -->
+                                        <div id="lobby-difficulty-section" class="acc-sub">
+                                            <div class="acc-sub-label">YZ Seviyesi</div>
+                                            <div class="acc-sub-row">
+                                                <button class="diff-pill diff-ea1" id="diff-kolay" data-diff="kolay">eA1
+                                                    Small</button>
+                                                <button class="diff-pill diff-rr1 diff-pill-active" id="diff-orta"
+                                                    data-diff="orta">RR ‑ 1 Thinking</button>
+                                                <button class="diff-pill diff-god" id="diff-usta" data-diff="usta">α1Q
+                                                    GoD</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Online room (shown only in online mode) -->
+                                        <div id="lobby-online-section" class="acc-sub hidden">
+                                            <div class="acc-sub-label">Online Bağlantı</div>
+                                            <div class="lobby-online-tabs">
+                                                <button class="lobby-online-tab active" id="lobby-tab-host">Oda
+                                                    Kur</button>
+                                                <button class="lobby-online-tab" id="lobby-tab-join">Katıl</button>
+                                            </div>
+                                            <div id="lobby-panel-host" class="lobby-online-panel">
+                                                <button id="lobby-btn-create-room" class="lobby-online-action-btn">⚡ Oda
+                                                    Oluştur</button>
+                                                <div id="lobby-host-code-display" class="lobby-code-display hidden">
+                                                    <div class="lobby-code-label">ODA KODU</div>
+                                                    <div class="lobby-code-number" id="lobby-host-room-code">----</div>
+                                                    <div class="lobby-code-waiting">Rakip bekleniyor...</div>
+                                                </div>
+                                            </div>
+                                            <div id="lobby-panel-join" class="lobby-online-panel hidden">
+                                                <input type="text" id="lobby-input-room-code" class="lobby-code-input"
+                                                    placeholder="4 haneli kod" maxlength="6">
+                                                <button id="lobby-btn-join-room" class="lobby-online-action-btn">Odaya
+                                                    Katıl</button>
+                                            </div>
+                                            <div id="lobby-socket-status" class="lobby-socket-status">⚫ Bağlı Değil
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ── Altta: Sağdan Sola Süre Butonu ── -->
+                    <div class="acc-slot acc-slot-time">
+                        <div class="acc-item acc-item-full" id="acc-time">
+                            <button class="acc-trigger" id="acc-time-trigger" aria-expanded="false">
+                                <span class="acc-label">Süre</span>
+                                <span class="acc-value" id="acc-time-value">⏳ Sınırsız</span>
+                                <span class="acc-arrow">›</span>
+                            </button>
+                            <div class="acc-panel" id="acc-time-panel">
+                                <div class="acc-panel-inner">
+                                    <div class="time-cards-grid">
+                                        <button class="time-card time-pill time-pill-active" data-time="0"
+                                            id="time-unlimited">
+                                            <div class="time-card-top">
+                                                <span class="time-card-icon">⏳</span>
+                                                <span class="time-card-check">✓</span>
+                                            </div>
+                                            <div class="time-card-title">Sınırsız</div>
+                                            <div class="time-card-desc">Rahat Oyun · Süresiz</div>
+                                        </button>
+                                        <button class="time-card time-pill" data-time="180" id="time-3">
+                                            <div class="time-card-top">
+                                                <span class="time-card-icon">⚡</span>
+                                                <span class="time-card-check hidden">✓</span>
+                                            </div>
+                                            <div class="time-card-title">3 Dakika</div>
+                                            <div class="time-card-desc">Yıldırım · Blitz</div>
+                                        </button>
+                                        <button class="time-card time-pill" data-time="300" id="time-5">
+                                            <div class="time-card-top">
+                                                <span class="time-card-icon">⏱️</span>
+                                                <span class="time-card-check hidden">✓</span>
+                                            </div>
+                                            <div class="time-card-title">5 Dakika</div>
+                                            <div class="time-card-desc">Hızlı · Rapid</div>
+                                        </button>
+                                        <button class="time-card time-pill" data-time="600" id="time-10">
+                                            <div class="time-card-top">
+                                                <span class="time-card-icon">🏆</span>
+                                                <span class="time-card-check hidden">✓</span>
+                                            </div>
+                                            <div class="time-card-title">10 Dakika</div>
+                                            <div class="time-card-desc">Klasik · Standart</div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── Ekranın En Altında: Liquid Glass Su Damlacığı Oyunu Başlat Tuşu ── -->
+                <div class="lobby-footer">
+                    <button class="lobby-start-btn droplet-btn" id="lobby-start-btn">
+                        <span class="droplet-water-sheen"></span>
+                        <span class="droplet-specular-top"></span>
+                        <span class="droplet-specular-spot"></span>
+                        <span class="droplet-specular-dot"></span>
+                        <span class="droplet-rim-glow"></span>
+                        <span class="droplet-content">Oyunu Başlat ⚡</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ══ INVENTORY MODAL ══ -->
+    <div id="inventory-modal" class="inv-modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Envanter">
+        <div class="inv-modal-box">
+
+            <!-- Header -->
+            <div class="inv-header">
+                <span class="inv-header-title"><img src="assets/inventory_chest.png" class="inv-title-img" alt="Envanter"> Envanter</span>
+                <button class="inv-close-btn" id="inv-close-btn" aria-label="Kapat">✕</button>
+            </div>
+
+            <!-- Body: Content area + Right sidebar tabs -->
+            <div class="inv-body">
+
+                <!-- Content Area -->
+                <div class="inv-content" id="inv-content">
+
+                    <!-- ÇERÇEVELER TAB -->
+                    <div class="inv-tab-panel" id="inv-panel-frames" data-panel="frames">
+                        <p class="inv-panel-label">ÇERÇEVELER</p>
+                        <div class="inv-frame-list" id="inv-frame-list">
+
+                            <button class="inv-frame-item inv-frame-active" data-frame="" id="frame-none">
+                                <div class="inv-frame-thumb inv-frame-thumb-none">
+                                    <span>✕</span>
+                                </div>
+                                <span class="inv-frame-name">Yok <span class="inv-font-badge">Varsayılan</span></span>
+                                <span class="inv-font-check">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-red" data-frame="assets/frames/bozkurt.png"
+                                id="frame-bozkurt">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/bozkurt.png" alt="Bozkurt">
+                                </div>
+                                <span class="inv-frame-name">Bozkurt</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-grey" data-frame="assets/frames/altin.png"
+                                id="frame-altin">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/altin.png" alt="Altın">
+                                </div>
+                                <span class="inv-frame-name">Altın</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-green" data-frame="assets/frames/anka.png"
+                                id="frame-anka">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/anka.png" alt="Anka">
+                                </div>
+                                <span class="inv-frame-name">Anka</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-red" data-frame="assets/frames/siber.png"
+                                id="frame-siber">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/siber.png" alt="Siber">
+                                </div>
+                                <span class="inv-frame-name">Siber</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-premium inv-frame-locked"
+                                data-frame="assets/frames/kizil_ejderha.png" id="frame-kizil" disabled>
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/kizil_ejderha.png" alt="BÖRÜ">
+                                </div>
+                                <span class="inv-frame-name">BÖRÜ</span>
+                                <span class="inv-frame-lock-badge">🔒 Sadece Admin</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-green" data-frame="assets/frames/satranc_ustasi.png"
+                                id="frame-satranc">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/satranc_ustasi.png" alt="Satranç Ustası">
+                                </div>
+                                <span class="inv-frame-name">Satranç Ustası</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-red" data-frame="assets/frames/kozmik_ejderha.png"
+                                id="frame-kozmik">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/kozmik_ejderha.png" alt="Kozmik Ejderha">
+                                </div>
+                                <span class="inv-frame-name">Kozmik Ejderha</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-green" data-frame="assets/frames/nostalji.png"
+                                id="frame-nostalji">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/nostalji.png" alt="Nostalji">
+                                </div>
+                                <span class="inv-frame-name">Nostalji</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-green"
+                                data-frame="assets/frames/karanlik_kristal.png" id="frame-kristal">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/karanlik_kristal.png" alt="Karanlık Kristal">
+                                </div>
+                                <span class="inv-frame-name">Karanlık Kristal</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-green" data-frame="assets/frames/siber2.png"
+                                id="frame-siber2">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/siber2.png" alt="Mavi Işın">
+                                </div>
+                                <span class="inv-frame-name">Mavi Işın</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-frame-item inv-frame-green" data-frame="assets/frames/bozkurt2.png"
+                                id="frame-bozkurt2">
+                                <div class="inv-frame-thumb">
+                                    <img src="assets/frames/bozkurt2.png" alt="TSK">
+                                </div>
+                                <span class="inv-frame-name">TSK</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <!-- PROFİLLER TAB -->
+                    <div class="inv-tab-panel hidden" id="inv-panel-profiles" data-panel="profiles">
+                        <p class="inv-panel-label">PROFİL RESİMLERİ</p>
+                        <div class="inv-profile-grid" id="inv-grid-profiles">
+
+                            <button class="inv-profile-item inv-profile-active" data-profile="" id="profile-default">
+                                <div class="inv-profile-circle inv-profile-circle-default">
+                                    <span>👤</span>
+                                </div>
+                                <span class="inv-profile-name">Varsayılan <span
+                                        class="inv-font-badge">Emoji</span></span>
+                                <span class="inv-profile-check">✓</span>
+                            </button>
+
+                            <button class="inv-profile-item" data-profile="assets/profiles/profil1.jpg" id="profile-1">
+                                <div class="inv-profile-circle">
+                                    <img src="assets/profiles/profil1.jpg" alt="Profil 1">
+                                </div>
+                                <span class="inv-profile-name">Ayşe</span>
+                                <span class="inv-profile-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-profile-item" data-profile="assets/profiles/profil2.jpg" id="profile-2">
+                                <div class="inv-profile-circle">
+                                    <img src="assets/profiles/profil2.jpg" alt="Profil 2">
+                                </div>
+                                <span class="inv-profile-name">Mehmet</span>
+                                <span class="inv-profile-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-profile-item" data-profile="assets/profiles/profil3.jpg" id="profile-3">
+                                <div class="inv-profile-circle">
+                                    <img src="assets/profiles/profil3.jpg" alt="Profil 3">
+                                </div>
+                                <span class="inv-profile-name">Uğur</span>
+                                <span class="inv-profile-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-profile-item" data-profile="assets/profiles/profil4.jpg" id="profile-4">
+                                <div class="inv-profile-circle">
+                                    <img src="assets/profiles/profil4.jpg" alt="Profil 4">
+                                </div>
+                                <span class="inv-profile-name">Kurt</span>
+                                <span class="inv-profile-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-profile-item" data-profile="assets/profiles/profil5.jpg" id="profile-5">
+                                <div class="inv-profile-circle">
+                                    <img src="assets/profiles/profil5.jpg" alt="Profil 5">
+                                </div>
+                                <span class="inv-profile-name">Zeynep</span>
+                                <span class="inv-profile-check hidden">✓</span>
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <!-- YAZI TİPİ TAB -->
+                    <div class="inv-tab-panel hidden" id="inv-panel-fonts" data-panel="fonts">
+                        <p class="inv-panel-label">YAZI TİPİ</p>
+                        <div class="inv-font-list" id="inv-font-list">
+
+                            <button class="inv-font-item inv-font-active" data-font="Outfit" id="font-outfit">
+                                <span class="inv-font-preview" style="font-family:'Outfit',sans-serif">Ata Chess</span>
+                                <span class="inv-font-name">Outfit <span class="inv-font-badge">Varsayılan</span></span>
+                                <span class="inv-font-check">✓</span>
+                            </button>
+
+                            <button class="inv-font-item" data-font="Cinzel Decorative" id="font-cinzel">
+                                <span class="inv-font-preview" style="font-family:'Cinzel Decorative',serif">Ata
+                                    Chess</span>
+                                <span class="inv-font-name">Cinzel Decorative</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-font-item" data-font="Orbitron" id="font-orbitron">
+                                <span class="inv-font-preview" style="font-family:'Orbitron',sans-serif">Ata
+                                    Chess</span>
+                                <span class="inv-font-name">Orbitron</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-font-item" data-font="Playfair Display" id="font-playfair">
+                                <span class="inv-font-preview" style="font-family:'Playfair Display',serif">Ata
+                                    Chess</span>
+                                <span class="inv-font-name">Playfair Display</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                            <button class="inv-font-item" data-font="Dancing Script" id="font-dancing">
+                                <span class="inv-font-preview" style="font-family:'Dancing Script',cursive">Ata
+                                    Chess</span>
+                                <span class="inv-font-name">Dancing Script</span>
+                                <span class="inv-font-check hidden">✓</span>
+                            </button>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Sidebar Tabs -->
+                <div class="inv-sidebar">
+                    <button class="inv-tab" id="inv-tab-frames" data-tab="frames" aria-pressed="true">
+                        <span class="inv-tab-icon">🖼</span>
+                        <span class="inv-tab-text">Çerçeveler</span>
+                    </button>
+                    <button class="inv-tab" id="inv-tab-profiles" data-tab="profiles" aria-pressed="false">
+                        <span class="inv-tab-icon">👤</span>
+                        <span class="inv-tab-text">Profiller</span>
+                    </button>
+                    <button class="inv-tab" id="inv-tab-fonts" data-tab="fonts" aria-pressed="false">
+                        <span class="inv-tab-icon">Aa</span>
+                        <span class="inv-tab-text">Yazı Tipi</span>
+                    </button>
+                </div>
+
+            </div><!-- /inv-body -->
+        </div><!-- /inv-modal-box -->
+    </div><!-- /inventory-modal -->
+
+
+    <!-- Scripts -->
+
+    <script src="js/audio.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/socket.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then((reg) => {
+                    console.log('PWA Service Worker registered:', reg.scope);
+                }).catch((err) => {
+                    console.log('PWA Service Worker registration failed:', err);
+                });
+            });
+        }
+    </script>
+    <div id="TEST_RESULTS" style="position:fixed; bottom:0; left:0; right:0; background:#111; color:#0f0; font-family:monospace; font-size:12px; z-index:999999; max-height:200px; overflow:auto; padding:8px;"></div>
+    <script>
+    (function() {
+        const out = document.getElementById('TEST_RESULTS');
+        const log = (msg) => {
+            const p = document.createElement('div');
+            p.textContent = msg;
+            out.appendChild(p);
+        };
+        const origLog = console.log;
+        console.log = function(...args) {
+            log(args.join(' '));
+            origLog.apply(console, args);
+        };
+        const errors = [];
+        window.addEventListener('error', e => errors.push(e.message + ' at ' + e.filename + ':' + e.lineno));
+
+        window.addEventListener('load', () => {
+            log('PAGE LOADED. Errors so far: ' + JSON.stringify(errors));
+            // Wait for lobby to initialize
+            setTimeout(() => {
+                const nickInput = document.getElementById('lobby-nickname-input');
+                if (nickInput) {
+                    nickInput.value = 'Ahmet';
+                    nickInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                const startBtn = document.getElementById('lobby-start-btn');
+                log('Found startBtn: ' + !!startBtn);
+                if (startBtn) startBtn.click();
+
+                setTimeout(() => {
+                    log('Game started. Status banner: ' + document.getElementById('status-banner').textContent);
+                    const canvas = document.getElementById('chess-canvas');
+                    log('Canvas size: ' + canvas.width + 'x' + canvas.height + ' CSS: ' + canvas.clientWidth + 'x' + canvas.clientHeight);
+
+                    // Square size
+                    const rect = canvas.getBoundingClientRect();
+                    const sz = canvas.clientWidth / 8;
+                    log('Square sz: ' + sz + ' Rect: left=' + rect.left + ', top=' + rect.top);
+
+                    // Click e2
+                    const e2x = 4 * sz + sz / 2;
+                    const e2y = 6 * sz + sz / 2;
+                    log('Clicking e2 (' + e2x + ',' + e2y + ')');
+                    canvas.dispatchEvent(new MouseEvent('mousedown', {
+                        clientX: rect.left + e2x, clientY: rect.top + e2y,
+                        bubbles: true
+                    }));
+                    window.dispatchEvent(new MouseEvent('mouseup', {
+                        clientX: rect.left + e2x, clientY: rect.top + e2y,
+                        bubbles: true
+                    }));
+
+                    setTimeout(() => {
+                        // Click e4
+                        const e4x = 4 * sz + sz / 2;
+                        const e4y = 4 * sz + sz / 2;
+                        log('Clicking e4 (' + e4x + ',' + e4y + ')');
+                        canvas.dispatchEvent(new MouseEvent('mousedown', {
+                            clientX: rect.left + e4x, clientY: rect.top + e4y,
+                            bubbles: true
+                        }));
+                        window.dispatchEvent(new MouseEvent('mouseup', {
+                            clientX: rect.left + e4x, clientY: rect.top + e4y,
+                            bubbles: true
+                        }));
+
+                        let ticks = 0;
+                        const timer = setInterval(() => {
+                            ticks++;
+                            const banner = document.getElementById('status-banner').textContent;
+                            const history = document.querySelectorAll('.history-item');
+                            log('TICK ' + ticks + ' (' + (ticks*300) + 'ms): Banner="' + banner.trim() + '", Moves=' + history.length + ', Errors=' + JSON.stringify(errors));
+                            if (ticks >= 8) {
+                                clearInterval(timer);
+                                log('TEST_FINISHED_SUCCESSFULLY');
+                            }
+                        }, 300);
+                    }, 250);
+                }, 500);
+            }, 300);
+        });
+    })();
+    </script>
+</body>
+
+</html>

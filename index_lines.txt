@@ -1,0 +1,43 @@
+﻿    <!-- Modal: Settings -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3 class="modal-title">Ayarlar</h3>
+            <div class="settings-form">
+                <div class="form-group">
+                    <label for="select-mode">Oyun Modu</label>
+                    <select id="select-mode">
+                        <option value="vs-bot">Yapay Zekaya KarÅŸÄ±</option>
+                        <option value="pvp">2 KiÅŸilik (AynÄ± Cihaz)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="select-difficulty">Bot Seviyesi</label>
+                    <select id="select-difficulty">
+                        <option value="kolay">Kolay (Yeni BaÅŸlayan)</option>
+                        <option value="orta" selected>Orta (KulÃ¼p Oyuncusu)</option>
+                        <option value="usta">Usta (Taktiksel Minimax)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="select-timer">Zaman KontrolÃ¼</label>
+                    <select id="select-timer">
+                        <option value="0" selected>SÄ±nÄ±rsÄ±z (Rahat Mod)</option>
+                        <option value="180">3 Dakika (Blitz)</option>
+                        <option value="300">5 Dakika (HÄ±zlÄ±)</option>
+                        <option value="600">10 Dakika (Klasik)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="select-theme">Tahta TemasÄ±</label>
+                    <select id="select-theme">
+                        <option value="crimson" selected>KÄ±rmÄ±zÄ± & Beyaz (Crimson)</option>
+                        <option value="emerald">ZÃ¼mrÃ¼t YeÅŸil (Modern)</option>
+                        <option value="classic">Klasik AhÅŸap</option>
+                        <option value="midnight">Gece Mavisi (Obsidian)</option>
+                    </select>
+                </div>
+            </div>
+            <button id="btn-close-settings" class="secondary-btn">Kapat</button>
+        </div>
+    </div>
+
